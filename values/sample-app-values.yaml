@@ -9,5 +9,7 @@ global:
       - name: ssp-registrypullsecret
 
 ingress:
+  # Required by chart (sample-rp-deployment). Use the hostname nginx exposes for the Sample App.
+  host: sampleapp.id-broadcom.com
   tls:
     secretName: ssp-general-tls
