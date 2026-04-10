@@ -1,18 +1,15 @@
-# Bitnami chart v12+: required if using bitnamilegacy images or if the chart flags oci.bitnami.com images.
+# Bitnami chart v12+: skip image verification (required for bitnamilegacy).
 # See https://github.com/bitnami/charts/issues/30850
+#
+# If pods show ImagePullBackOff from oci.bitnami.com, use Docker Hub instead (below).
+# bitnamilegacy images are frozen; prefer oci.bitnami.com + bitnami/mysql when the cluster can reach OCI.
 global:
   security:
     allowInsecureImages: true
 
-# Alternative: use Docker Hub bitnamilegacy (frozen images) — keep allowInsecureImages above.
-#image:
-#  registry: docker.io
-#  repository: bitnamilegacy/mysql
-#  tag: 8.4.5-debian-12-r0
-
 image:
-  registry: oci.bitnami.com
-  repository: bitnami/mysql
+  registry: docker.io
+  repository: bitnamilegacy/mysql
   tag: 8.4.5-debian-12-r0
 
 architecture: replication
