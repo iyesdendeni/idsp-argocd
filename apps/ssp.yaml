@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ssp
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"  
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: ssp
+    server: https://kubernetes.default.svc
+  project: default
+  sources:
+    - chart: ssp
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+      targetRevision: 4.0.0-1144.stage
+      helm:
+        valueFiles: 
+        - $values/values/ssp-values.yaml
+        # Ensures external DB secret is used (default chart name is <release>-db-pxc). Overrides if values ref lags.
+        parameters:
+          - name: ssp.db.existingSecret
+            value: mysql-credentials
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

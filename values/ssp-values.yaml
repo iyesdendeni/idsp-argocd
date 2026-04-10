@@ -1,0 +1,37 @@
+#USER-SUPPLIED VALUES: null
+hazelcast-enterprise:
+  cluster:
+    memberCount: 2
+  image:
+    pullSecrets:
+    - ssp-registrypullsecret
+ssp:
+  deployment:
+    size: demo
+  featureFlags:
+    dataseed:
+      enabled: true
+    mcpserver:
+      enabled: true
+    multiidstore:
+      enabled: true
+  global:
+    drSite: false
+    ssp:
+      registry:
+        existingSecrets:
+        - name: ssp-registrypullsecret
+  db:
+    serviceHost: mysql-primary.ssp.svc.cluster.local
+    servicePort: 3306
+    name: iamauth
+    user: iamauth
+    # Chart reads ssp.db.existingSecret (not passwordSecret). Default is <release>-db-pxc, e.g. ssp-ssp-db-pxc.
+    existingSecret: mysql-credentials   # must include key mysql-password (see Bitnami mysql SealedSecret)
+
+  ingress:
+    host: ssp.id-broadcom.com
+    ingressClassName: nginx
+    tls:
+      secretName: ssp-general-tls
+    type: nginx

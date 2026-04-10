@@ -1,0 +1,15 @@
+# Deployed in the same namespace as SSP (ssp).
+# sspReleaseName tells the chart to auto-read demo client credentials
+# from the secret "ssp-ssp-secret-democlient" created by SSP in this namespace.
+sspReleaseName: ssp
+
+global:
+  registry:
+    existingSecrets:
+      - name: ssp-registrypullsecret
+
+ingress:
+  # Required by chart (sample-rp-deployment). Use the hostname nginx exposes for the Sample App.
+  host: sampleapp.id-broadcom.com
+  tls:
+    secretName: ssp-general-tls

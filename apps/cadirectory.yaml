@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cadirectory
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: ssp
+    server: https://kubernetes.default.svc
+  project: default
+  # Chart TLS Secret: live cert bytes often differ from rendered manifest (regen, PEM normalization).
+  # Ignore data drift so Argo does not stay OutOfSync on this Secret forever.
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: ssp-symantec-dir-ssp-symantec-dir-tls
+      namespace: ssp
+      jsonPointers:
+        - /data
+  sources:
+    # Chart versions like 4.0.0-*.stage live on the root index, not .../ssp-maint-patch
+    - chart: ssp-symantec-dir
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+      targetRevision: 4.0.0-1144.stage
+      helm:
+        releaseName: ssp-symantec-dir
+        valueFiles:
+          - $values/values/cadirectory-values.yaml
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Large LDIF ConfigMap: client-side apply stores full manifest in last-applied-configuration (>256KiB).
+      - ServerSideApply=true
+      # If SSA still errors, Replace avoids apply/annotation path for sync (may recreate some resources).
+      - Replace=true

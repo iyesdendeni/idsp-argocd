@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: idsp-parent-app                          # this is the name of the application in the argocd server, it should be unique globally
+  namespace: argocd
+  finalizers:                                    # list of finalizers, used to ensure that the application is deleted correctly
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:                                   # namespace and server where the application will be deployed
+    namespace: argocd                            
+    server: https://kubernetes.default.svc       
+  project: default                               # project where the application will be deployed
+  source:
+    directory:                                   # directory where the application will be deployed
+      recurse: true                              # recurse through the directory and deploy all the applications
+    path: apps                                   # path to the applications
+    targetRevision: main                         # target revision of the application
+    repoURL: https://github.com/iyesdendeni/idsp-argocd.git  # repository URL of the application
+  syncPolicy:
+    automated:                                   # automated sync policy, used to sync the application automatically
+      prune: true                                # remove cluster resources that are no longer present in the source after the sync
+      selfHeal: true                             # revert manual changes made to the cluster resources after the sync
+    retry:
+      limit: 5                                   # limit the number of retries
+      backoff:                                   # backoff policy, used to backoff the retries
+        duration: 5s                             # duration of the backoff in seconds
+        maxDuration: 3m0s                        # maximum duration of the backoff in seconds
+        factor: 2                                # factor of the backoff
+    syncOptions:                                 # sync options, used to sync the application
+        - CreateNamespace=true                   # create the namespace if it does not exist
+        

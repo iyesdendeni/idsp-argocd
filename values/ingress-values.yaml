@@ -1,0 +1,12 @@
+# USER-SUPPLIED VALUES: null
+controller:
+  admissionWebhooks:
+    enabled: true
+  allowSnippetAnnotations: true
+  config:
+    annotation-value-word-blocklist: load_module\,lua_package\,_by_lua\,location\,root\,proxy_pass\,serviceaccount\,{\,}\,\'\,\\\\
+    annotations-risk-level: Critical
+    use-forwarded-headers: "true"
+  service:
+    externalTrafficPolicy: Local
+    loadBalancerIP: "34.19.89.223"                  # reserved load balancer IP of the application to be used in the ingress

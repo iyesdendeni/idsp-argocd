@@ -1,0 +1,3 @@
+# ECK operator - restrict management scope to the logging namespace only
+managedNamespaces:
+  - logging

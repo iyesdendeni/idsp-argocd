@@ -1,0 +1,65 @@
+nameOverride: prometheus-operator
+
+prometheus:
+  prometheusSpec:
+    scrapeInterval: 1m
+    evaluationInterval: 1m
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: premium-rwo
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+        ephemeral-storage: 8Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+        ephemeral-storage: 8Gi
+
+alertmanager:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - alertmanager.id-broadcom.com
+    tls:
+      - secretName: monitoring-general-tls
+        hosts:
+          - alertmanager.id-broadcom.com
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: premium-rwo
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
+
+grafana:
+  image:
+    registry: docker.io
+    repository: grafana/grafana
+    tag: "10.3.1"
+  config:
+    security:
+      admin_password: prom-operator
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - grafana.id-broadcom.com
+    tls:
+      - secretName: ssp-general-tls
+        hosts:
+          - grafana.id-broadcom.com
+  labels:
+    dashboards: ssp-grafana

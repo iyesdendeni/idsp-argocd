@@ -1,0 +1,212 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: elasticsearch-retention-setup
+  namespace: logging
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: setup
+          image: curlimages/curl:latest
+          env:
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-es-elastic-user
+                  key: elastic
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              BASE_URL="https://elasticsearch-es-http.logging.svc:9200"
+              AUTH="elastic:${ELASTIC_PASSWORD}"
+
+              echo "Waiting for Elasticsearch to be ready..."
+              until curl --insecure -u "${AUTH}" -s -o /dev/null \
+                  -w "%{http_code}" "${BASE_URL}/_cluster/health" | grep -qE "^2"; do
+                echo "Not ready yet, retrying in 10s..."
+                sleep 10
+              done
+              echo "Elasticsearch is ready."
+
+              # ── ILM Lifecycle Policies ────────────────────────────────────────────
+
+              echo "Creating ssp_audit lifecycle policy (30 days)..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/_ilm/policy/ssp_audit_lifecycle_policy" \
+                -H 'Content-Type: application/json' \
+                -d '{
+                  "policy": {
+                    "phases": {
+                      "hot": {
+                        "min_age": "0ms",
+                        "actions": {
+                          "set_priority": { "priority": 100 },
+                          "rollover": {
+                            "max_age": "1d",
+                            "max_primary_shard_size": "50gb"
+                          }
+                        }
+                      },
+                      "delete": {
+                        "min_age": "30d",
+                        "actions": {
+                          "delete": { "delete_searchable_snapshot": true }
+                        }
+                      }
+                    }
+                  }
+                }'
+
+              echo "Creating ssp_log lifecycle policy (10 days)..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/_ilm/policy/ssp_log_lifecycle_policy" \
+                -H 'Content-Type: application/json' \
+                -d '{
+                  "policy": {
+                    "phases": {
+                      "hot": {
+                        "min_age": "0ms",
+                        "actions": {
+                          "set_priority": { "priority": 100 },
+                          "rollover": {
+                            "max_age": "1d",
+                            "max_primary_shard_size": "50gb"
+                          }
+                        }
+                      },
+                      "delete": {
+                        "min_age": "10d",
+                        "actions": {
+                          "delete": { "delete_searchable_snapshot": true }
+                        }
+                      }
+                    }
+                  }
+                }'
+
+              echo "Creating ssp_tp_log lifecycle policy (7 days)..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/_ilm/policy/ssp_tp_log_lifecycle_policy" \
+                -H 'Content-Type: application/json' \
+                -d '{
+                  "policy": {
+                    "phases": {
+                      "hot": {
+                        "min_age": "0ms",
+                        "actions": {
+                          "set_priority": { "priority": 100 },
+                          "rollover": {
+                            "max_age": "1d",
+                            "max_primary_shard_size": "50gb"
+                          }
+                        }
+                      },
+                      "delete": {
+                        "min_age": "7d",
+                        "actions": {
+                          "delete": { "delete_searchable_snapshot": true }
+                        }
+                      }
+                    }
+                  }
+                }'
+
+              # ── Index Templates ───────────────────────────────────────────────────
+
+              echo "Creating ssp_audit index template..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/_index_template/ssp_audit" \
+                -H 'Content-Type: application/json' \
+                -d '{
+                  "index_patterns": ["ssp_audit*"],
+                  "template": {
+                    "settings": {
+                      "index": {
+                        "lifecycle": {
+                          "name": "ssp_audit_lifecycle_policy",
+                          "rollover_alias": "ssp_audit_alias"
+                        }
+                      }
+                    },
+                    "aliases": {
+                      "ssp_audit_alias": { "is_write_index": true }
+                    }
+                  },
+                  "composed_of": []
+                }'
+
+              echo "Creating ssp_log index template..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/_index_template/ssp_log" \
+                -H 'Content-Type: application/json' \
+                -d '{
+                  "index_patterns": ["ssp_log*"],
+                  "template": {
+                    "settings": {
+                      "index": {
+                        "lifecycle": {
+                          "name": "ssp_log_lifecycle_policy",
+                          "rollover_alias": "ssp_log_alias"
+                        }
+                      }
+                    },
+                    "aliases": {
+                      "ssp_log_alias": { "is_write_index": true }
+                    }
+                  },
+                  "composed_of": []
+                }'
+
+              echo "Creating ssp_tp_log index template..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/_index_template/ssp_tp_log" \
+                -H 'Content-Type: application/json' \
+                -d '{
+                  "index_patterns": ["ssp_tp_log*"],
+                  "template": {
+                    "settings": {
+                      "index": {
+                        "lifecycle": {
+                          "name": "ssp_tp_log_lifecycle_policy",
+                          "rollover_alias": "ssp_tp_log_alias"
+                        }
+                      }
+                    },
+                    "aliases": {
+                      "ssp_tp_log_alias": { "is_write_index": true }
+                    }
+                  },
+                  "composed_of": []
+                }'
+
+              # ── Initial Writable Indexes ──────────────────────────────────────────
+              # Using date-math names (URL-encoded). Errors are ignored in case they
+              # already exist from a previous run.
+
+              echo "Creating initial ssp_audit index..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/%3Cssp_audit-messaegs-%7Bnow%2Fd%7D-000001%3E" \
+                -H 'Content-Type: application/json' \
+                -d '{}' || true
+
+              echo "Creating initial ssp_log index..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/%3Cssp_log-messaegs-%7Bnow%2Fd%7D-000001%3E" \
+                -H 'Content-Type: application/json' \
+                -d '{}' || true
+
+              echo "Creating initial ssp_tp_log index..."
+              curl --insecure -u "${AUTH}" -s -XPUT \
+                "${BASE_URL}/%3Cssp_tp_log-messaegs-%7Bnow%2Fd%7D-000001%3E" \
+                -H 'Content-Type: application/json' \
+                -d '{}' || true
+
+              echo "Data retention policy setup complete."
