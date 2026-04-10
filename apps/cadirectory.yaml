@@ -13,9 +13,10 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   sources:
+    # Chart versions like 4.0.0-*.stage live on the root index, not .../ssp-maint-patch
     - chart: ssp-symantec-dir
-      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com/ssp-maint-patch
-      targetRevision: 4.0.0-1153.stage
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+      targetRevision: 4.0.0-1144.stage
       helm:
         releaseName: ssp-symantec-dir
         valueFiles:
