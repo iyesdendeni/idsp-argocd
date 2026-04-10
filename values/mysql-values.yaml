@@ -1,14 +1,15 @@
-# Uncomment lines 2-9 to use bitnamilegacy/mysql if you can pull the offical images from oci.bitnami registry
-#global:
-#  security:
-#    allowInsecureImages: true
-#
+# Bitnami chart v12+: required if using bitnamilegacy images or if the chart flags oci.bitnami.com images.
+# See https://github.com/bitnami/charts/issues/30850
+global:
+  security:
+    allowInsecureImages: true
+
+# Alternative: use Docker Hub bitnamilegacy (frozen images) — keep allowInsecureImages above.
 #image:
 #  registry: docker.io
 #  repository: bitnamilegacy/mysql
 #  tag: 8.4.5-debian-12-r0
 
-# Comment out lines 12-15 if you can pull the official mysql image and uncomment lines 2-9
 image:
   registry: oci.bitnami.com
   repository: bitnami/mysql
