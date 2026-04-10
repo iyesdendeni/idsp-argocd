@@ -12,6 +12,14 @@ spec:
     namespace: ssp
     server: https://kubernetes.default.svc
   project: default
+  # Chart TLS Secret: live cert bytes often differ from rendered manifest (regen, PEM normalization).
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: sample-app-ssp-sample-app-spi-demo-tls
+      namespace: ssp
+      jsonPointers:
+        - /data
   sources:
     - chart: ssp-sample-app
       repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
