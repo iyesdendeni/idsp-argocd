@@ -19,6 +19,10 @@ spec:
       helm:
         valueFiles: 
         - $values/values/ssp-values.yaml
+        # Ensures external DB secret is used (default chart name is <release>-db-pxc). Overrides if values ref lags.
+        parameters:
+          - name: ssp.db.existingSecret
+            value: mysql-credentials
     - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
       targetRevision: main
       ref: values
