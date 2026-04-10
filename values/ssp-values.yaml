@@ -26,9 +26,8 @@ ssp:
     servicePort: 3306
     name: iamauth
     user: iamauth
-    passwordSecret:
-      existingSecret: mysql-credentials   # K8s Secret with keys: mysql-root-password, mysql-password, mysql-replication-password
-      key: mysql-password
+    # Chart reads ssp.db.existingSecret (not passwordSecret). Default is <release>-db-pxc, e.g. ssp-ssp-db-pxc.
+    existingSecret: mysql-credentials   # must include key mysql-password (see Bitnami mysql SealedSecret)
 
   ingress:
     host: ssp.id-broadcom.com
