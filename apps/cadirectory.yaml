@@ -30,3 +30,5 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      # Avoid 262144-byte annotation limit on large ConfigMaps (e.g. LDIF); same pattern as prometheus app
+      - ServerSideApply=true
