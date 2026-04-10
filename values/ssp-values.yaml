@@ -1,0 +1,38 @@
+#USER-SUPPLIED VALUES: null
+hazelcast-enterprise:
+  cluster:
+    memberCount: 2
+  image:
+    pullSecrets:
+    - ssp-registrypullsecret
+ssp:
+  deployment:
+    size: demo
+  featureFlags:
+    dataseed:
+      enabled: true
+    mcpserver:
+      enabled: true
+    multiidstore:
+      enabled: true
+  global:
+    drSite: false
+    ssp:
+      registry:
+        existingSecrets:
+        - name: ssp-registrypullsecret
+  db:
+    serviceHost: mysql-primary.ssp.svc.cluster.local
+    servicePort: 3306
+    name: iamauth
+    user: iamauth
+    passwordSecret:
+      existingSecret: mysql-credentials   # K8s Secret with keys: mysql-root-password, mysql-password, mysql-replication-password
+      key: mysql-password
+
+  ingress:
+    host: ssp.id-broadcom.com
+    ingressClassName: nginx
+    tls:
+      secretName: ssp-general-tls
+    type: nginx

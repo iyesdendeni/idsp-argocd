@@ -1,0 +1,36 @@
+#USER-SUPPLIED VALUES: null
+db:
+  enabled: false
+sspfbService:
+  ingressLogsIncluded: false
+fluent-bit:
+  imagePullSecrets:
+  - name: ssp-registrypullsecret
+  env:
+    - name: ELASTIC_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: fluent-bit-elastic-credentials
+          key: password
+  customConfig:
+    outputs:
+    - tags:
+      - ssp_log
+      - ssp_tp_log
+      - ssp_audit
+      template: |
+          Name es
+          Host  elasticsearch-es-http.logging.svc
+          Port  9200
+          tls On
+          tls.verify Off
+          Suppress_Type_Name On
+          Replace_Dots On
+          Index ${tag}-%Y.%m.%d
+          HTTP_User kibana
+          HTTP_Passwd ${ELASTIC_PASSWORD}
+global:
+  registry:
+    existingSecrets:
+    - name: ssp-registrypullsecret
+sspReleaseName: ssp

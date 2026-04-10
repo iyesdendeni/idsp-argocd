@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sample-app
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: ssp
+    server: https://kubernetes.default.svc
+  project: default
+  sources:
+    - chart: ssp-sample-app
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+      targetRevision: 4.0.0-1144.stage
+      helm:
+        valueFiles:
+          - $values/values/sample-app-values.yaml
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

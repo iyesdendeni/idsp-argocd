@@ -1,0 +1,57 @@
+# Uncomment lines 2-9 to use bitnamilegacy/mysql if you can pull the offical images from oci.bitnami registry
+#global:
+#  security:
+#    allowInsecureImages: true
+#
+#image:
+#  registry: docker.io
+#  repository: bitnamilegacy/mysql
+#  tag: 8.4.5-debian-12-r0
+
+# Comment out lines 12-15 if you can pull the official mysql image and uncomment lines 2-9
+image:
+  registry: oci.bitnami.com
+  repository: bitnami/mysql
+  tag: 8.4.5-debian-12-r0
+
+architecture: replication
+
+auth:
+  existingSecret: mysql-credentials   # K8s Secret with keys: mysql-root-password, mysql-password, mysql-replication-password
+  database: iamauth
+  username: iamauth
+
+primary:
+  persistence:
+    enabled: true
+    storageClass: premium-rwo
+    size: 50Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+  extraConfiguration: |-
+    [mysqld]
+    innodb_buffer_pool_size=1G
+    max_connections=200
+    character-set-server=utf8mb4
+
+# Enable read replicas
+secondary:
+  replicaCount: 2
+  persistence:
+    enabled: true
+    storageClass: premium-rwo
+    size: 50Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+metrics:
+  enabled: false
+  serviceMonitor:
+    enabled: false

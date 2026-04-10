@@ -1,0 +1,34 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: kibana
+  namespace: logging
+spec:
+  version: 9.2.1
+  count: 1
+  elasticsearchRef:
+    name: elasticsearch
+    namespace: logging
+    serviceName: elasticsearch-es-http
+  http:
+    service:
+      spec:
+        type: ClusterIP
+    tls:
+      selfSignedCertificate:
+        subjectAltNames:
+          - dns: kibana.id-broadcom.com
+  podTemplate:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: "0.5"
+            limits:
+              memory: 2Gi
+              cpu: "1"

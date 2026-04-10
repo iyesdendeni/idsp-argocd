@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: elastic-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: logging
+    server: https://kubernetes.default.svc
+  project: default
+  sources:
+    - chart: eck-operator
+      repoURL: https://helm.elastic.co
+      targetRevision: 3.2.0
+      helm:
+        valueFiles:
+          - $values/values/kibana-values.yaml
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

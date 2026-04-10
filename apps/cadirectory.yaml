@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cadirectory
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: ssp
+    server: https://kubernetes.default.svc
+  project: default
+  sources:
+    - chart: ssp-symantec-dir
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com/ssp-maint-patch
+      targetRevision: 4.0.0-1153.stage
+      helm:
+        releaseName: ssp-symantec-dir
+        valueFiles:
+          - $values/values/cadirectory-values.yaml
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
