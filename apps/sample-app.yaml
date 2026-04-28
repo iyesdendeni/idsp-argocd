@@ -22,12 +22,12 @@ spec:
         - /data
   sources:
     - chart: ssp-sample-app
-      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
-      targetRevision: 4.0.0-1144.stage
+      repoURL: ${SSP_HELM_REPO_URL}
+      targetRevision: ${CHART_VERSION}
       helm:
         valueFiles:
           - $values/values/sample-app-values.yaml
-    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+    - repoURL: ${GIT_REPO_URL}
       targetRevision: main
       ref: values
   syncPolicy:

@@ -4,7 +4,7 @@ hazelcast-enterprise:
     memberCount: 2
   image:
     pullSecrets:
-    - ssp-registrypullsecret
+    - ${SSP_REGISTRY_PULL_SECRET_NAME}
 ssp:
   deployment:
     size: demo
@@ -20,7 +20,7 @@ ssp:
     ssp:
       registry:
         existingSecrets:
-        - name: ssp-registrypullsecret
+        - name: ${SSP_REGISTRY_PULL_SECRET_NAME}
   db:
     serviceHost: mysql-primary.ssp.svc.cluster.local
     servicePort: 3306
@@ -33,5 +33,5 @@ ssp:
     host: ssp.id-broadcom.com
     ingressClassName: nginx
     tls:
-      secretName: ssp-general-tls
+      secretName: ${SSP_GENERAL_TLS_SECRET_NAME}
     type: nginx

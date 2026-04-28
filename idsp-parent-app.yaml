@@ -15,7 +15,7 @@ spec:
       recurse: true                              # recurse through the directory and deploy all the applications
     path: apps                                   # path to the applications
     targetRevision: main                         # target revision of the application
-    repoURL: https://github.com/iyesdendeni/idsp-argocd.git  # repository URL of the application
+    repoURL: ${GIT_REPO_URL}  # repository URL of the application
   syncPolicy:
     automated:                                   # automated sync policy, used to sync the application automatically
       prune: true                                # remove cluster resources that are no longer present in the source after the sync

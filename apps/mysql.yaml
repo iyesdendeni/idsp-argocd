@@ -4,7 +4,7 @@ metadata:
   name: mysql
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"  
+    argocd.argoproj.io/sync-wave: "2"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -17,17 +17,14 @@ spec:
       chart: mysql
       targetRevision: 12.3.5
       helm:
-        valueFiles: 
+        valueFiles:
           - $values/values/mysql-values.yaml
-    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+    - repoURL: ${GIT_REPO_URL}
       targetRevision: main
       ref: values
-    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+    - repoURL: ${GIT_REPO_URL}
       targetRevision: main
       path: manifests
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: ssp
   syncPolicy:
     automated:
       prune: false

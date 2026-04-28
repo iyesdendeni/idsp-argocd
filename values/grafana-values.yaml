@@ -58,7 +58,7 @@ grafana:
     hosts:
       - grafana.id-broadcom.com
     tls:
-      - secretName: ssp-general-tls
+      - secretName: ${SSP_GENERAL_TLS_SECRET_NAME}
         hosts:
           - grafana.id-broadcom.com
   labels:

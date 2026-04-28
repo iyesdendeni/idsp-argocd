@@ -19,7 +19,7 @@ spec:
       helm:
         valueFiles:
           - $values/values/kibana-values.yaml
-    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+    - repoURL: ${GIT_REPO_URL}
       targetRevision: main
       ref: values
   syncPolicy:

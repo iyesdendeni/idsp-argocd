@@ -9,4 +9,4 @@ controller:
     use-forwarded-headers: "true"
   service:
     externalTrafficPolicy: Local
-    loadBalancerIP: "34.19.89.223"                  # reserved load balancer IP of the application to be used in the ingress
+    loadBalancerIP: "${INGRESS_LOAD_BALANCER_IP}"   # set in config/deployment-vars.env; rendered by render-deployment-vars.sh

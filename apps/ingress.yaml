@@ -17,14 +17,14 @@ spec:
       repoURL: https://kubernetes.github.io/ingress-nginx  # repository URL of the application
       targetRevision: 4.14.0
       helm:
-        valueFiles: 
-        - $values/values/ingress-values.yaml
-    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
-      targetRevision: main                      # target revision of the application
+        valueFiles:
+          - $values/values/ingress-values.yaml
+    - repoURL: ${GIT_REPO_URL}
+      targetRevision: main
       ref: values
   syncPolicy:
     automated:
       prune: true                               # remove cluster resources that are no longer present in the source after the sync
       selfHeal: true                            # revert manual changes made to the cluster resources after the sync
     syncOptions:                                # sync options, used to sync the application
-        - CreateNamespace=true                  # create the namespace if it does not exist  
+      - CreateNamespace=true                  # create the namespace if it does not exist

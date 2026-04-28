@@ -24,13 +24,13 @@ spec:
   sources:
     # Chart versions like 4.0.0-*.stage live on the root index, not .../ssp-maint-patch
     - chart: ssp-symantec-dir
-      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
-      targetRevision: 4.0.0-1144.stage
+      repoURL: ${SSP_HELM_REPO_URL}
+      targetRevision: ${CHART_VERSION}
       helm:
         releaseName: ssp-symantec-dir
         valueFiles:
           - $values/values/cadirectory-values.yaml
-    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
+    - repoURL: ${GIT_REPO_URL}
       targetRevision: main
       ref: values
   syncPolicy:
