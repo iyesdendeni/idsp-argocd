@@ -9,8 +9,9 @@ This repository contains the ArgoCD configuration to deploy the Symantec Identit
 1. [Repository Structure](#repository-structure)
 2. [How It Works — App of Apps Pattern](#how-it-works--app-of-apps-pattern)
 3. [Deployment Order — Sync Waves](#deployment-order--sync-waves)
-4. [How to Deploy](#how-to-deploy)
-5. [Services](#services)
+4. [Cloning and Adapting the Deployment](#cloning-and-adapting-the-deployment)
+5. [How to Deploy](#how-to-deploy)
+6. [Services](#services)
    - [Ingress (nginx)](#1-ingress-nginx)
    - [MySQL](#2-mysql)
    - [Elastic Operator (ECK)](#3-elastic-operator-eck)
@@ -20,12 +21,12 @@ This repository contains the ArgoCD configuration to deploy the Symantec Identit
    - [CA Directory](#3-ca-directory)
    - [SSP (IDSP)](#6-ssp-idsp)
    - [Sample App](#7-sample-app)
-6. [Secrets Management — Sealed Secrets](#secrets-management--sealed-secrets)
-7. [Data Retention Policy — Elasticsearch](#data-retention-policy--elasticsearch)
-8. [Key Design Decisions](#key-design-decisions)
-9. [Prerequisites & Manual Steps](#prerequisites--manual-steps)
-10. [DNS Configuration](#dns-configuration)
-11. [Deploying IDSP with ArgoCD](#deploying-idsp-with-argocd)
+7. [Secrets Management — Sealed Secrets](#secrets-management--sealed-secrets)
+8. [Data Retention Policy — Elasticsearch](#data-retention-policy--elasticsearch)
+9. [Key Design Decisions](#key-design-decisions)
+10. [Prerequisites & Manual Steps](#prerequisites--manual-steps)
+11. [DNS Configuration](#dns-configuration)
+12. [Deploying IDSP with ArgoCD](#deploying-idsp-with-argocd)
 
 ---
 
@@ -114,6 +115,115 @@ Wave 7:   sample-app            (needs ssp to be running first)
 ```
 
 > **Note:** Apps in the same wave (e.g. `elastic-operator` and `prometheus` both at wave 3) run in **parallel** — this is more efficient since they have no dependency on each other. The wave only advances when ALL apps at the current wave are healthy.
+
+---
+
+## Cloning and Adapting the Deployment
+
+The IDSP deployment is designed for portability. Every environment-specific value — the Git repository URL, public DNS domain, load balancer IP, Helm chart version, and Kubernetes secret names — is parameterised in a single environment file and stamped into all manifests at render time. This means the entire configuration can be transplanted to a new cluster and a new domain with a handful of targeted changes, without touching any of the underlying ArgoCD Application structure or Helm values logic.
+
+The reference deployment package is published on the Broadcom Enterprise GitHub at [github.gwd.broadcom.net/ESD/idsp-argocd-id604771](https://github.gwd.broadcom.net/ESD/idsp-argocd-id604771.git). This repository serves as a reference deployment that can be cloned and adapted for your own environment. The steps below walk through cloning the source, customising all environment-specific variables, publishing the rendered configuration to your own private GitHub repository, and triggering the deployment.
+
+---
+
+### 1. Clone the Repository
+
+Clone the reference deployment from the Broadcom internal GitHub:
+
+```bash
+git clone https://github.gwd.broadcom.net/ESD/idsp-argocd-id604771.git
+cd idsp-argocd-id604771
+```
+
+> **Note:** This repository is hosted on the Broadcom internal GitHub (`github.gwd.broadcom.net`), which is not resolvable from inside a Kubernetes cluster. All subsequent steps are designed so that ArgoCD points at your own private repository — not this one — once the configuration is pushed.
+
+---
+
+### 2. Define Your Environment Variables
+
+All environment-specific values are centralised in `config/deployment-vars.env`. Open this file and update each variable to match your target environment before rendering any manifests.
+
+```bash
+vi config/deployment-vars.env
+```
+
+| Variable                        | Description                                                                                                                                                                   |  Must Change?  |
+|:--------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------:|
+| `GIT_REPO_URL`                  | URL of the Git repository ArgoCD will poll for changes. **Must be reachable from inside the cluster** — replace this with your own private repository URL (see step 3 below). |      Yes       |
+| `IDSP_PUBLIC_DOMAIN`            | DNS domain suffix for all ingress hostnames (e.g. `ssp.<domain>`, `kibana.<domain>`).                                                                                         |      Yes       |
+| `INGRESS_LOAD_BALANCER_IP`      | Static external IP address assigned to the ingress-nginx `LoadBalancer` Service. Obtain this from your cloud provider after provisioning the cluster.                         |      Yes       |
+| `SSP_HELM_REPO_URL`             | Broadcom SSP Helm chart repository URL.                                                                                                                                       |   Usually no   |
+| `CHART_VERSION`                 | Helm chart version applied to all SSP applications (`ssp`, `ssp-infra`, `ssp-sample-app`, `ssp-symantec-dir`).                                                                | When upgrading |
+| `SSP_REGISTRY_PULL_SECRET_NAME` | Name of the Kubernetes `docker-registry` pull secret in the `ssp` namespace used to pull private SSP images.                                                                  |       No       |
+| `SSP_GENERAL_TLS_SECRET_NAME`   | Name of the TLS secret in the `ssp` namespace used by the SSP and Sample App ingresses.                                                                                       |       No       |
+
+Once all variables are set, run the rendering script to substitute them into every ArgoCD Application manifest, Helm values file, and Kibana manifest:
+
+```bash
+./render-deployment-vars.sh
+```
+
+The script expands only the seven known deployment variables — all other `${}` references in the YAML files (such as `${ELASTIC_PASSWORD}` used by fluent-bit at runtime) are left untouched.
+
+> After rendering, verify a few generated files — for example `idsp-parent-app.yaml` and `apps/ssp.yaml` — to confirm your values have been substituted correctly before committing.
+
+---
+
+### 3. Push to Your Private Repository
+
+ArgoCD must be able to reach the Git repository from inside the Kubernetes cluster. The Broadcom internal GitHub (`github.gwd.broadcom.net`) is not cluster-accessible, so the rendered configuration must be pushed to your own private repository on public GitHub.
+
+**Create your private repository first** at `https://github.com/<username>/idsp-argocd`, then re-point the local clone and push:
+
+```bash
+# Remove the Broadcom origin
+git remote remove origin
+
+# Add your own private repository as the new origin
+git remote add origin https://github.com/<username>/idsp-argocd.git
+
+# Stage all rendered manifests and configuration
+git add .
+git commit -m "Initial IDSP deployment configuration"
+
+# Push to your private repository
+git push -u origin main
+```
+
+> **Important:** Ensure `GIT_REPO_URL` in `config/deployment-vars.env` is set to `https://github.com/<username>/idsp-argocd.git` (matching the repository you just created) **before** running `./render-deployment-vars.sh`. The rendered manifests embed this URL into every ArgoCD Application so that ArgoCD knows where to poll for changes.
+
+---
+
+### 4. Run the Deployment
+
+With the configuration published to your private repository, complete the pre-deployment bootstrap steps and then apply the root ArgoCD Application to hand control to ArgoCD.
+
+**1. Create all required namespaces:**
+
+```bash
+kubectl create namespace ingress
+kubectl create namespace logging
+kubectl create namespace monitoring
+kubectl create namespace ssp
+```
+
+**2. Create TLS secrets and the registry pull secret** in the appropriate namespaces (see [Prerequisites & Manual Steps](#prerequisites--manual-steps)).
+
+**3. Generate and commit SealedSecrets** for MySQL, Kibana, and fluent-bit credentials, then push them to your private repository (see [Secrets Management](#secrets-management--sealed-secrets)).
+
+**4. Apply the parent ArgoCD Application:**
+
+```bash
+kubectl apply -f idsp-parent-app.yaml
+```
+
+ArgoCD will read the `apps/` directory from your private repository and deploy all eight child applications in sync-wave order with no further manual intervention required. Monitor progress with:
+
+```bash
+kubectl get applications -n argocd -w
+```
+
+For a full walkthrough of each deployment step and post-deployment validation, refer to [How to Deploy](#how-to-deploy) and [Deploying IDSP with ArgoCD](#deploying-idsp-with-argocd).
 
 ---
 
