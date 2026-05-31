@@ -24,7 +24,7 @@ spec:
   sources:
     # Chart versions like 4.0.0-*.stage live on the root index, not .../ssp-maint-patch
     - chart: ssp-symantec-dir
-      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com/ssp-maint-patch
       targetRevision: 4.0.2-1065.stage
       helm:
         releaseName: ssp-symantec-dir

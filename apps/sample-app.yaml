@@ -22,7 +22,7 @@ spec:
         - /data
   sources:
     - chart: ssp-sample-app
-      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com/ssp-maint-patch
       targetRevision: 4.0.2-1065.stage
       helm:
         valueFiles:
