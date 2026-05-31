@@ -6,10 +6,10 @@ sspReleaseName: ssp
 global:
   registry:
     existingSecrets:
-      - name: ${SSP_REGISTRY_PULL_SECRET_NAME}
+      - name: ssp-registrypullsecret
 
 ingress:
   # Required by chart (sample-rp-deployment). Use the hostname nginx exposes for the Sample App.
   host: sampleapp.id-broadcom.com
   tls:
-    secretName: ${SSP_GENERAL_TLS_SECRET_NAME}
+    secretName: ssp-general-tls

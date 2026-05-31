@@ -13,7 +13,7 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   sources:
-    - repoURL: ${GIT_REPO_URL}
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
       targetRevision: main
       path: manifests/logging
   syncPolicy:

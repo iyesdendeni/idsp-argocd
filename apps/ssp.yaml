@@ -14,8 +14,8 @@ spec:
   project: default
   sources:
     - chart: ssp
-      repoURL: ${SSP_HELM_REPO_URL}
-      targetRevision: ${CHART_VERSION}
+      repoURL: https://ssp-helm-charts-staging.storage.googleapis.com
+      targetRevision: 4.0.2-1065.stage
       helm:
         valueFiles:
           - $values/values/ssp-values.yaml
@@ -23,7 +23,7 @@ spec:
         parameters:
           - name: ssp.db.existingSecret
             value: mysql-credentials
-    - repoURL: ${GIT_REPO_URL}
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
       targetRevision: main
       ref: values
   syncPolicy:

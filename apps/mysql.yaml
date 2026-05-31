@@ -19,10 +19,10 @@ spec:
       helm:
         valueFiles:
           - $values/values/mysql-values.yaml
-    - repoURL: ${GIT_REPO_URL}
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
       targetRevision: main
       ref: values
-    - repoURL: ${GIT_REPO_URL}
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
       targetRevision: main
       path: manifests
   syncPolicy:

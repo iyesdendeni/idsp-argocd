@@ -5,4 +5,4 @@ service:
 global:
   registry:
     existingSecrets:
-      - name: ${SSP_REGISTRY_PULL_SECRET_NAME}
+      - name: ssp-registrypullsecret

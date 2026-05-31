@@ -20,7 +20,7 @@ spec:
         releaseName: prometheus-operator
         valueFiles:
           - $values/values/grafana-values.yaml
-    - repoURL: ${GIT_REPO_URL}
+    - repoURL: https://github.com/iyesdendeni/idsp-argocd.git
       targetRevision: main
       ref: values
   syncPolicy:

@@ -5,7 +5,7 @@ sspfbService:
   ingressLogsIncluded: false
 fluent-bit:
   imagePullSecrets:
-  - name: ${SSP_REGISTRY_PULL_SECRET_NAME}
+  - name: ssp-registrypullsecret
   env:
     - name: ELASTIC_PASSWORD
       valueFrom:
@@ -32,5 +32,5 @@ fluent-bit:
 global:
   registry:
     existingSecrets:
-    - name: ${SSP_REGISTRY_PULL_SECRET_NAME}
+    - name: ssp-registrypullsecret
 sspReleaseName: ssp
